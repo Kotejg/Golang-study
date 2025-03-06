@@ -1,2 +1,2 @@
-# Golang-study-
+# Golang-study
 dedicado aos meus estudos sobre Golang 
