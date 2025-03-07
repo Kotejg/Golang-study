@@ -1,0 +1,9 @@
+{
+	"Função main": {
+		"prefix": "ppp",
+		"body": [
+			"fmt.Println($1)"
+		],
+		"description": "Função fmt.Println"
+	}
+}

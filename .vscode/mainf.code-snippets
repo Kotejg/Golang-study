@@ -1,0 +1,11 @@
+{
+	"Função main": {
+		"prefix": "mainf",
+		"body": [
+			"func main() {",
+			"\t$1",
+			"}"
+		],
+		"description": "Função main básica"
+	}
+}
