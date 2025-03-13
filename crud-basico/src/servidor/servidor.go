@@ -8,12 +8,14 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type usuario struct {
-	ID    uint32 `json:"id"`
-	Nome  string `json:"nome"`
-	Email string `json:"email"`
+	ID     *uint32    `json:"id"`
+	Nome   *string    `json:"nome"`
+	Email  *string    `json:"email"`
+	DtNasc *time.Time `json:"dt_nasc"`
 }
 
 // Insere usuario no banco de dados
@@ -26,7 +28,7 @@ func CriarUsusario(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var usuario usuario
-
+	fmt.Println(string(corpoRequisicao))
 	if erro = json.Unmarshal(corpoRequisicao, &usuario); erro != nil {
 		w.Write([]byte("Falha ao converter o ususario para struct"))
 		return
@@ -41,14 +43,15 @@ func CriarUsusario(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// prepare statemen
-	statement, err := db.Prepare("INSERT INTO usuarios (nome, email) VALUES(?,?)")
+	statement, err := db.Prepare("INSERT INTO usuarios (nome, email,dt_nasc) VALUES(?,?,?)")
 	if err != nil {
-		w.Write([]byte("Erro ao criar statement"))
+		w.Write([]byte(err.Error() + "sss"))
+		fmt.Println("Erro ao criar sstatement fff: ")
 		return
 	}
 	defer statement.Close()
 
-	insercao, err := statement.Exec(usuario.Nome, usuario.Email)
+	insercao, err := statement.Exec(*usuario.Nome, *usuario.Email, *usuario.DtNasc)
 
 	if err != nil {
 		w.Write([]byte("Erro ao executar statement"))
@@ -83,7 +86,7 @@ func BuscarUsuarios(w http.ResponseWriter, r *http.Request) {
 	var usuarios []usuario
 	for linhas.Next() {
 		var usuario usuario
-		if err := linhas.Scan(&usuario.ID, &usuario.Nome, &usuario.Email); err != nil {
+		if err := linhas.Scan(&usuario.ID, &usuario.Nome, &usuario.Email, &usuario.DtNasc); err != nil {
 			w.Write([]byte("erro ao scanear o usuario"))
 			return
 		}
@@ -121,7 +124,7 @@ func BuscarUsuario(w http.ResponseWriter, r *http.Request) {
 	defer linha.Close()
 	var usuario usuario
 	if linha.Next() {
-		if erro := linha.Scan(&usuario.ID, &usuario.Nome, &usuario.Email); erro != nil {
+		if erro := linha.Scan(&usuario.ID, &usuario.Nome, &usuario.Email, &usuario.DtNasc); erro != nil {
 			w.Write([]byte("erro ao escanear usuario no banco "))
 			return
 		}
@@ -149,9 +152,11 @@ func AlterarUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(string(corpoReq))
+
 	var usuario usuario
 	if err := json.Unmarshal(corpoReq, &usuario); err != nil {
-		w.Write([]byte("erro ao converter os usuario para JSON"))
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -162,12 +167,18 @@ func AlterarUsuario(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	statement, err := db.Prepare("update usuarios set nome=?, email=? where id=?")
+	statement, err := db.Prepare(`update usuarios set nome=?, email=?, dt_nasc= ? where id=?`)
 	if err != nil {
-		w.Write([]byte("erro ao criar o statement"))
+		w.Write([]byte("erro ao criar o statement aaa"))
 	}
 	defer statement.Close()
-	if _, err = statement.Exec(usuario.Nome, usuario.Email, ID); err != nil {
+
+	fmt.Println(statement)
+
+	if _, err = statement.Exec(*usuario.Nome,
+		*usuario.Email,
+		*usuario.DtNasc,
+		ID); err != nil {
 		w.Write([]byte("erro ao atualizar o usuario"))
 		return
 	}
@@ -200,5 +211,5 @@ func DeleteUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-	
+
 }
